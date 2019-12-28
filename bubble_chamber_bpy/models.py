@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import random
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -8,8 +9,14 @@ class Particle:
     position: np.ndarray
     velocity: np.ndarray
     charges: np.ndarray
-    lifetime: float
-    decays_after: float
+    decays_after: float = field(init=False)
+    lifetime: float = 0.0
+    is_alive: bool = True
+    is_dirty: bool = True
+
+    def __post_init__(self):
+        # Generate a decay time for this particle:
+        self.decays_after = random.uniform(0.5, 5.0)
 
     @property
     def total_charge(self) -> int:

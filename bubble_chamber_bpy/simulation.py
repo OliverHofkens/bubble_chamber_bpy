@@ -1,5 +1,5 @@
 from time import perf_counter
-from typing import Sequence
+from typing import List, Sequence
 
 import numpy as np
 
@@ -11,6 +11,7 @@ class Simulation:
         self.chamber: BubbleChamber = chamber
         self.particles: Sequence[Particle] = particles
         self.clock: float = 0.0
+        self.new_part_buffer: List[Particle] = []
 
     def start(self):
         self.clock = perf_counter()
@@ -22,18 +23,53 @@ class Simulation:
 
         for p in self.particles:
             self._update_particle(p, tdelta)
+        if self.new_part_buffer:
+            self.particles.extend(self.new_part_buffer)
+            self.new_part_buffer = []
 
     def _update_particle(self, p: Particle, tdelta: float):
-        # Magnetic component of Lorentz force:
-        mag_force = p.total_charge * np.cross(p.velocity, self.chamber.magnetic_field)
+        # Update lifetime
+        p.lifetime += tdelta
+        if p.lifetime >= p.decays_after:
+            p.is_alive = False
 
-        # Apply force:
-        # F = m.a, so a = F / m
-        acceleration = mag_force / p.mass
-        p.velocity += acceleration * tdelta
+            # Decay into smaller particles
+            if p.mass > 1:
+                self.split_particle(p)
+        else:
+            # Magnetic component of Lorentz force:
+            mag_force = p.total_charge * np.cross(
+                p.velocity, self.chamber.magnetic_field
+            )
 
-        # Friction:
-        p.velocity *= 1.0 - (self.chamber.friction * tdelta)
+            # Apply force:
+            # F = m.a, so a = F / m
+            acceleration = mag_force / p.mass
+            p.velocity += acceleration * tdelta
 
-        # Apply velocity:
-        p.position += p.velocity * tdelta
+            # Friction:
+            p.velocity *= 1.0 - (self.chamber.friction * tdelta)
+
+            # Apply velocity:
+            p.position += p.velocity * tdelta
+
+    def split_particle(self, p: Particle):
+        if p.mass == 1:
+            return
+
+        while p.mass > 1:
+            new_charge = np.around(
+                np.random.random(p.charges.shape) * p.charges
+            ).astype("int64")
+
+            if np.any(new_charge >= 1):
+                p.charges -= new_charge
+                self.new_part_buffer.append(
+                    Particle(np.copy(p.position), np.copy(p.velocity), new_charge)
+                )
+
+        # Add the last remaining particle:
+        self.new_part_buffer.append(
+            Particle(np.copy(p.position), np.copy(p.velocity), np.copy(p.charges))
+        )
+        print(f"{p} split into {self.new_part_buffer}")
