@@ -21,6 +21,11 @@ def create_chamber(chamber: BubbleChamber):
     chamber_bpy.name = "Chamber"
     chamber_bpy.display_type = "WIRE"
 
+    # Add smoke domain to the chamber:
+    bpy.ops.object.modifier_add(type="SMOKE")
+    smk = chamber_bpy.modifiers["Smoke"]
+    smk.smoke_type = "DOMAIN"
+
 
 def create_particles(particles: Sequence[Particle]):
     print("Creating particles")
@@ -90,6 +95,11 @@ def get_or_create_particle(p: Particle, i: int):
         # Assign the material:
         mat = get_or_create_material(p)
         obj.data.materials.append(mat)
+
+        # Add smoke
+        bpy.ops.object.modifier_add(type="SMOKE")
+        smk = obj.modifiers["Smoke"]
+        smk.smoke_type = "FLOW"
 
     return obj
 
