@@ -42,17 +42,17 @@ def create_light(chamber: BubbleChamber):
 
 
 def run_simulation(simulation: Simulation):
+    FPS = 30
+
     simulation.start()
-    i = 0
+    frame = 0
     while any(p.is_alive for p in simulation.particles):
         # Advance the simulation by 1 step:
         simulation.step()
-        i += 1
 
-        # if i % 10 != 0:
-        #    continue
-
-        bpy.context.scene.frame_set(i)
+        # Current frame is the total time passed in sim * FPS
+        frame = int(simulation.time_passed * FPS)
+        bpy.context.scene.frame_set(frame)
 
         for i, p in enumerate(simulation.particles):
             obj = get_or_create_particle(p, i)

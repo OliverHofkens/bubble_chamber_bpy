@@ -7,10 +7,17 @@ from bubble_chamber_bpy.models import BubbleChamber, Particle
 
 
 class Simulation:
-    def __init__(self, chamber: BubbleChamber, particles: Sequence[Particle]):
+    def __init__(
+        self,
+        chamber: BubbleChamber,
+        particles: Sequence[Particle],
+        time_modifier: float = 1.0,
+    ):
         self.chamber: BubbleChamber = chamber
         self.particles: Sequence[Particle] = particles
         self.clock: float = 0.0
+        self.time_passed: float = 0.0
+        self.time_modifier = time_modifier
         self.new_part_buffer: List[Particle] = []
 
     def start(self):
@@ -18,7 +25,8 @@ class Simulation:
 
     def step(self):
         now = perf_counter()
-        tdelta = now - self.clock
+        tdelta = (now - self.clock) * self.time_modifier
+        self.time_passed += tdelta
         self.clock = now
 
         for p in self.particles:

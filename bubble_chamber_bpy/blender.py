@@ -42,7 +42,7 @@ particles = [
         np.array([5.0, 5.0, 5.0]),
     )
 ]
-simulation = Simulation(chamber, particles)
+simulation = Simulation(chamber, particles, time_modifier=0.25)
 
 
 r.clear_all()
