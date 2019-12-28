@@ -10,6 +10,7 @@ from bubble_chamber_bpy.simulation import Simulation
 def clear_all():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete()
+    bpy.context.scene.frame_set(0)
 
 
 def create_chamber(chamber: BubbleChamber):
@@ -29,9 +30,15 @@ def create_particles(particles: Sequence[Particle]):
 
 def create_camera(chamber: BubbleChamber):
     print("Creating camera")
-    bpy.ops.object.camera_add(location=(0, 0, chamber.dimensions[2]))
+    # TODO: Make this less random:
+    bpy.ops.object.camera_add(location=(0, 0, chamber.dimensions[2] * 2))
     cam = bpy.context.object
     bpy.context.scene.camera = cam
+
+
+def create_light(chamber: BubbleChamber):
+    print("Creating light")
+    bpy.ops.object.light_add(type="SUN", location=(0, 0, chamber.dimensions[2]))
 
 
 def run_simulation(simulation: Simulation):
@@ -79,5 +86,21 @@ def get_or_create_particle(p: Particle, i: int):
         # obj.keyframe_insert(data_path="hide_viewport")
         obj.hide_render = False
         obj.keyframe_insert(data_path="hide_render")
+
+        # Assign the material:
+        mat = get_or_create_material(p)
+        obj.data.materials.append(mat)
+
+    return obj
+
+
+def get_or_create_material(p: Particle):
+    name = "Material Particle"
+
+    obj = bpy.data.materials.get(name)
+
+    if not obj:
+        obj = bpy.data.materials.new(name=name)
+        obj.diffuse_color = (100.0, 100.0, 100.0, 100.0)
 
     return obj
