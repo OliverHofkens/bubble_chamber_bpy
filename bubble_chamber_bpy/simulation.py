@@ -30,7 +30,8 @@ class Simulation:
         self.clock = now
 
         for p in self.particles:
-            self._update_particle(p, tdelta)
+            if p.is_alive:
+                self._update_particle(p, tdelta)
         if self.new_part_buffer:
             self.particles.extend(self.new_part_buffer)
             self.new_part_buffer = []
@@ -65,19 +66,24 @@ class Simulation:
         if p.mass == 1:
             return
 
-        while p.mass > 1:
-            new_charge = np.around(
-                np.random.random(p.charges.shape) * p.charges
-            ).astype("int64")
+        # Split the particle into all its "atoms":
+        atoms = [1] * p.charges[0] + [0] * p.charges[1] + [-1] * p.charges[2]
+        atoms = np.random.permutation(atoms)
+        idx = 0
 
-            if np.any(new_charge >= 1):
-                p.charges -= new_charge
-                self.new_part_buffer.append(
-                    Particle(np.copy(p.position), np.copy(p.velocity), new_charge)
-                )
+        while idx <= (len(atoms) - 1):
+            max_mass = len(atoms) - 1
+            new_mass = np.random.randint(1, max_mass) if max_mass > 1 else 1
+            new_charge_symbols = atoms[idx : idx + new_mass]
+            idx = idx + new_mass
 
-        # Add the last remaining particle:
-        self.new_part_buffer.append(
-            Particle(np.copy(p.position), np.copy(p.velocity), np.copy(p.charges))
-        )
+            unique, counts = np.unique(new_charge_symbols, return_counts=True)
+            counts = dict(zip(unique, counts))
+            new_charges = np.array(
+                [counts.get(1, 0), counts.get(0, 0), counts.get(-1, 0)]
+            )
+            self.new_part_buffer.append(
+                Particle(np.copy(p.position), np.copy(p.velocity), new_charges)
+            )
+
         print(f"{p} split into {self.new_part_buffer}")

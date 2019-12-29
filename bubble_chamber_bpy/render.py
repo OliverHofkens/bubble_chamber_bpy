@@ -1,3 +1,5 @@
+import colorsys
+from contextlib import contextmanager
 from typing import Sequence
 
 import bpy
@@ -20,11 +22,33 @@ def create_chamber(chamber: BubbleChamber):
     chamber_bpy = bpy.context.object
     chamber_bpy.name = "Chamber"
     chamber_bpy.display_type = "WIRE"
+    chamber_bpy.hide_render = True
+
+    # Smoke effects:
+    bpy.ops.object.quick_smoke()
+    smoke_dom = bpy.data.objects["Smoke Domain"]
+    smoke_dom.location = (0, 0, 0)
+    smoke_dom.scale = chamber.dimensions / 2
+    smk = smoke_dom.modifiers["Smoke"]
+    # Smoke shouldn't rise or fall:
+    smk.domain_settings.beta = 0.0
+
+    # Quick smoke added an emitter to the chamber itself, remove it:
+    chamber_bpy.select_set(True)
+    bpy.context.view_layer.objects.active = chamber_bpy
+    bpy.ops.object.modifier_remove(modifier="Smoke")
 
     # Add smoke domain to the chamber:
-    bpy.ops.object.modifier_add(type="SMOKE")
-    smk = chamber_bpy.modifiers["Smoke"]
-    smk.smoke_type = "DOMAIN"
+    # bpy.ops.object.modifier_add(type="SMOKE")
+    # smk = chamber_bpy.modifiers["Smoke"]
+    # smk.smoke_type = "DOMAIN"
+    # Smoke shouldn't rise or fall:
+    # smk.domain_settings.beta = 0.0
+
+    # The chamber itself should be transparent, otherwise we can't look inside:
+    # mat = bpy.data.materials.new(name="Smoke Domain Material")
+    # mat.diffuse_color = (0.0, 0.0, 0.0, 0.0)
+    # chamber_bpy.data.materials.append(mat)
 
 
 def create_particles(particles: Sequence[Particle]):
@@ -51,7 +75,7 @@ def run_simulation(simulation: Simulation):
 
     simulation.start()
     frame = 0
-    while any(p.is_alive for p in simulation.particles):
+    while any(p.is_dirty for p in simulation.particles):
         # Advance the simulation by 1 step:
         simulation.step()
 
@@ -63,6 +87,7 @@ def run_simulation(simulation: Simulation):
             obj = get_or_create_particle(p, i)
 
             if p.is_alive:
+                set_visibility(obj, True)
                 obj.location = p.position
                 obj.keyframe_insert(data_path="location")
             elif p.is_dirty:
@@ -71,8 +96,7 @@ def run_simulation(simulation: Simulation):
                 obj.keyframe_insert(data_path="location")
                 # obj.hide_viewport = True
                 # obj.keyframe_insert(data_path="hide_viewport")
-                obj.hide_render = True
-                obj.keyframe_insert(data_path="hide_render")
+                set_visibility(obj, False)
 
 
 def get_or_create_particle(p: Particle, i: int):
@@ -80,17 +104,18 @@ def get_or_create_particle(p: Particle, i: int):
     obj = bpy.data.objects.get(name)
 
     if not obj:
-        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.1, location=p.position)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.01, location=p.position)
         obj = bpy.context.object
         obj.name = name
 
-        # Ensure the particle is visible:
+        # Ensure the particle is visible starting at this frame:
         obj.location = p.position
         obj.keyframe_insert(data_path="location")
         # obj.hide_viewport = False
         # obj.keyframe_insert(data_path="hide_viewport")
-        obj.hide_render = False
-        obj.keyframe_insert(data_path="hide_render")
+        with at_frame(0):
+            set_visibility(obj, False)
+        set_visibility(obj, True)
 
         # Assign the material:
         mat = get_or_create_material(p)
@@ -100,6 +125,7 @@ def get_or_create_particle(p: Particle, i: int):
         bpy.ops.object.modifier_add(type="SMOKE")
         smk = obj.modifiers["Smoke"]
         smk.smoke_type = "FLOW"
+        smk.flow_settings.smoke_color = color_for_particle(p, False)
 
     return obj
 
@@ -107,10 +133,36 @@ def get_or_create_particle(p: Particle, i: int):
 def get_or_create_material(p: Particle):
     name = "Material Particle"
 
-    obj = bpy.data.materials.get(name)
-
-    if not obj:
-        obj = bpy.data.materials.new(name=name)
-        obj.diffuse_color = (100.0, 100.0, 100.0, 100.0)
+    obj = bpy.data.materials.new(name=name)
+    obj.diffuse_color = color_for_particle(p)
 
     return obj
+
+
+def color_for_particle(p: Particle, with_alpha: bool = True):
+    charge = p.total_charge
+    hue = 0 if charge >= 0 else 0.7
+    saturation = abs(charge) / p.mass
+    value = 0.7
+    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+
+    if with_alpha:
+        alpha = 1.0
+        return (*rgb, alpha)
+    else:
+        return rgb
+
+
+def set_visibility(obj, vis: bool):
+    hide = not vis
+    if obj.hide_render != hide:
+        obj.hide_render = hide
+        obj.keyframe_insert(data_path="hide_render")
+
+
+@contextmanager
+def at_frame(frame: int):
+    current_frame = bpy.context.scene.frame_current
+    bpy.context.scene.frame_set(frame)
+    yield
+    bpy.context.scene.frame_set(current_frame)

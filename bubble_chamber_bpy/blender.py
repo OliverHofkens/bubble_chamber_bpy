@@ -39,10 +39,10 @@ particles = [
     Particle(
         np.array([-1 * CHAMBER_SIZE / 2, 0.0, 0.0]),
         np.array([5.0, 0.0, 0.0]),
-        np.array([5.0, 5.0, 5.0]),
+        np.array([5, 5, 5]),
     )
 ]
-simulation = Simulation(chamber, particles, time_modifier=0.25)
+simulation = Simulation(chamber, particles, time_modifier=0.5)
 
 
 r.clear_all()

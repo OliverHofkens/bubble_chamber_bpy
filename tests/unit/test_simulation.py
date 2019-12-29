@@ -34,3 +34,12 @@ def test_particle_with_mass_two_splits_in_two(chamber):
     for new_p in sim.new_part_buffer:
         assert np.array_equal(new_p.position, p.position)
         assert np.array_equal(new_p.velocity, p.velocity)
+
+
+def test_split_never_results_in_zero_mass_particles(chamber):
+    sim = Simulation(chamber, [])
+    p = particle_with_charge(5, 5, 5)
+    sim.split_particle(p)
+
+    for new_p in sim.new_part_buffer:
+        assert new_p.mass >= 1
