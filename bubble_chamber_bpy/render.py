@@ -1,4 +1,5 @@
 import colorsys
+import math
 from contextlib import contextmanager
 from typing import Sequence
 
@@ -28,35 +29,8 @@ def create_chamber(chamber: BubbleChamber):
     bpy.ops.object.effector_add(type="TURBULENCE", radius=size, location=(0, 0, 0))
     field = bpy.context.object
     field.name = "Turbulence and Flow"
-    field.field.flow = 5.0
-
-    # Smoke effects:
-    # bpy.ops.object.quick_smoke()
-    # smoke_dom = bpy.data.objects["Smoke Domain"]
-    # smoke_dom.location = (0, 0, 0)
-    # smoke_dom.scale = chamber.dimensions / 2
-    # smk = smoke_dom.modifiers["Smoke"]
-    # Smoke shouldn't rise or fall:
-    # smk.domain_settings.beta = 0.0
-    # smk.domain_settings.resolution_max = 64
-    # smk.domain_settings.use_high_resolution = True
-
-    # Quick smoke added an emitter to the chamber itself, remove it:
-    # chamber_bpy.select_set(True)
-    # bpy.context.view_layer.objects.active = chamber_bpy
-    # bpy.ops.object.modifier_remove(modifier="Smoke")
-
-    # Add smoke domain to the chamber:
-    # bpy.ops.object.modifier_add(type="SMOKE")
-    # smk = chamber_bpy.modifiers["Smoke"]
-    # smk.smoke_type = "DOMAIN"
-    # Smoke shouldn't rise or fall:
-    # smk.domain_settings.beta = 0.0
-
-    # The chamber itself should be transparent, otherwise we can't look inside:
-    # mat = bpy.data.materials.new(name="Smoke Domain Material")
-    # mat.diffuse_color = (0.0, 0.0, 0.0, 0.0)
-    # chamber_bpy.data.materials.append(mat)
+    field.field.flow = 8.0
+    field.field.strength = 0.0
 
 
 def create_particles(particles: Sequence[Particle]):
@@ -71,26 +45,33 @@ def create_world():
     world.color = (0, 0, 0)
 
 
+def create_renderer():
+    scene = bpy.data.scenes["Scene"]
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.eevee.use_bloom = True
+    scene.eevee.use_gtao = True
+    scene.eevee.use_ssr = True
+
+
 def create_camera(chamber: BubbleChamber):
     print("Creating camera")
-    # TODO: Make this less random:
-    bpy.ops.object.camera_add(location=(0, 0, chamber.dimensions[2] * 2))
+    chamber_size = np.max(chamber.dimensions) * (3 / 4)
+    bpy.ops.object.camera_add(
+        location=(chamber_size, chamber_size, chamber_size),
+        rotation=(math.radians(53), 0, math.radians(135)),
+    )
     cam = bpy.context.object
     bpy.context.scene.camera = cam
 
 
-def create_vapor_particle():
+def create_vapor_particle(name: str, material):
     print("Creating vapor particle")
     bpy.ops.mesh.primitive_cube_add()
     vapor_part = bpy.context.object
-    vapor_part.name = "Vapor"
+    vapor_part.name = name
     vapor_part.hide_viewport = True
     vapor_part.hide_render = True
-
-
-def create_light(chamber: BubbleChamber):
-    print("Creating light")
-    bpy.ops.object.light_add(type="SUN", location=(0, 0, chamber.dimensions[2]))
+    vapor_part.data.materials.append(material)
 
 
 def run_simulation(simulation: Simulation):
@@ -118,9 +99,11 @@ def run_simulation(simulation: Simulation):
                 obj.location = p.position
                 obj.keyframe_insert(data_path="location")
                 set_visibility(obj, False)
-                obj.particle_systems[
-                    0
-                ].settings.frame_end = bpy.context.scene.frame_current
+
+                if p.total_charge != 0:
+                    obj.particle_systems[
+                        0
+                    ].settings.frame_end = bpy.context.scene.frame_current
 
 
 def get_or_create_particle(p: Particle, i: int):
@@ -145,23 +128,23 @@ def get_or_create_particle(p: Particle, i: int):
         mat = get_or_create_material(p)
         obj.data.materials.append(mat)
 
-        # Particle system:
-        bpy.ops.object.particle_system_add()
-        particles = obj.particle_systems[0]
-        particles.name = f"{name} Particles"
-        particles.settings.frame_start = bpy.context.scene.frame_current
-        particles.settings.particle_size = 0.01
-        particles.settings.size_random = 0.5
-        particles.settings.lifetime = 1000.0
-        particles.settings.effector_weights.gravity = 0.0
-        particles.settings.render_type = "OBJECT"
-        particles.settings.instance_object = bpy.data.objects["Vapor"]
+        # Particle system if the particle is charged:
+        if p.total_charge != 0:
+            bpy.ops.object.particle_system_add()
+            particles = obj.particle_systems[0]
+            particles.name = f"{name} Particles"
+            particles.settings.frame_start = bpy.context.scene.frame_current
+            particles.settings.count = 2000
+            particles.settings.particle_size = 0.005
+            particles.settings.size_random = 1.0
+            particles.settings.lifetime = 1000.0
+            particles.settings.normal_factor = 0.3
+            particles.settings.effector_weights.gravity = 0.0
 
-        # Add smoke
-        # bpy.ops.object.modifier_add(type="SMOKE")
-        # smk = obj.modifiers["Smoke"]
-        # smk.smoke_type = "FLOW"
-        # smk.flow_settings.smoke_color = color_for_particle(p, False)
+            vapor_name = particles.name + " Vapor"
+            create_vapor_particle(vapor_name, mat)
+            particles.settings.render_type = "OBJECT"
+            particles.settings.instance_object = bpy.data.objects[vapor_name]
 
     return obj
 
@@ -183,6 +166,7 @@ def get_or_create_material(p: Particle):
 
     emission = node_tree.nodes.new(type="ShaderNodeEmission")
     emission.inputs["Color"].default_value = color_for_particle(p)
+    emission.inputs["Strength"].default_value = 3.0
     node_tree.links.new(
         emission.outputs[0], node_tree.get_output_node(target="ALL").inputs[0]
     )
@@ -191,11 +175,11 @@ def get_or_create_material(p: Particle):
 
 
 def color_for_particle(p: Particle, with_alpha: bool = True):
-    charge = p.total_charge
-    hue = 0 if charge >= 0 else 0.7
-    saturation = abs(charge) / p.mass
-    value = 0.7
-    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+    # charge = p.total_charge
+    # hue = 0 if charge >= 0 else 0.60
+    # saturation = abs(charge) / (p.mass * 0.8)
+    # value = 0.8
+    rgb = colorsys.hsv_to_rgb(0.6, 0.6, 0.8)
 
     if with_alpha:
         alpha = 1.0
