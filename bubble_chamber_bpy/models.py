@@ -16,7 +16,7 @@ class Particle:
 
     def __post_init__(self):
         # Generate a decay time for this particle:
-        self.decays_after = random.uniform(0.5, 5.0)
+        self.decays_after = random.uniform(0.25, 2.50)
 
     @property
     def total_charge(self) -> int:

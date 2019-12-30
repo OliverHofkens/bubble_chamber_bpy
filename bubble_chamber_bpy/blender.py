@@ -31,7 +31,7 @@ from bubble_chamber_bpy.simulation import Simulation
 from bubble_chamber_bpy import render as r
 
 
-CHAMBER_SIZE = 20
+CHAMBER_SIZE = 10
 chamber = BubbleChamber(
     np.array([CHAMBER_SIZE, CHAMBER_SIZE, CHAMBER_SIZE]), np.array([0.0, 0.0, 2.0]), 0.3
 )
@@ -40,14 +40,20 @@ particles = [
         np.array([-1 * CHAMBER_SIZE / 2, 0.0, 0.0]),
         np.array([5.0, 0.0, 0.0]),
         np.array([5, 5, 5]),
-    )
+    ),
+    Particle(
+        np.array([CHAMBER_SIZE / 2, 0.0, CHAMBER_SIZE / 2]),
+        np.array([-5.0, 2.0, -2.0]),
+        np.array([2, 2, 2]),
+    ),
 ]
 simulation = Simulation(chamber, particles, time_modifier=0.5)
 
 
 r.clear_all()
+r.create_world()
 r.create_chamber(chamber)
+r.create_vapor_particle()
 r.create_particles(particles)
 r.create_camera(chamber)
-r.create_light(chamber)
 r.run_simulation(simulation)
