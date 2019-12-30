@@ -55,13 +55,33 @@ def create_renderer():
 
 def create_camera(chamber: BubbleChamber):
     print("Creating camera")
-    chamber_size = np.max(chamber.dimensions) * (3 / 4)
-    bpy.ops.object.camera_add(
-        location=(chamber_size, chamber_size, chamber_size),
-        rotation=(math.radians(53), 0, math.radians(135)),
+    # Add a path for the camera to track:
+    bpy.ops.curve.primitive_nurbs_circle_add(
+        radius=np.max(chamber.dimensions), rotation=(math.radians(45), 0, 0)
     )
+    path = bpy.context.object
+    path.name = "Camera Path"
+    camera_curve = bpy.data.curves[0]
+    camera_curve.name = "Camera Path Curve"
+    camera_curve.eval_time = 0
+    camera_curve.keyframe_insert(data_path="eval_time")
+
+    # Create the actual camera, the location is already constrained to the path
+    bpy.ops.object.camera_add()
     cam = bpy.context.object
     bpy.context.scene.camera = cam
+
+    # Lock the camera to the path:
+    bpy.ops.object.constraint_add(type="FOLLOW_PATH")
+    clamp = cam.constraints["Follow Path"]
+    clamp.target = path
+
+    # Always track the origin of the chamber:
+    bpy.ops.object.constraint_add(type="TRACK_TO")
+    tracker = cam.constraints["Track To"]
+    tracker.target = bpy.data.objects["Chamber"]
+    tracker.track_axis = "TRACK_NEGATIVE_Z"
+    tracker.up_axis = "UP_Y"
 
 
 def create_vapor_particle(name: str, material):
@@ -79,13 +99,14 @@ def run_simulation(simulation: Simulation):
 
     simulation.start()
     frame = 0
+    scene = bpy.context.scene
     while any(p.is_dirty for p in simulation.particles):
         # Advance the simulation by 1 step:
         simulation.step()
 
         # Current frame is the total time passed in sim * FPS
         frame = int(simulation.time_passed * FPS)
-        bpy.context.scene.frame_set(frame)
+        scene.frame_set(frame)
 
         for i, p in enumerate(simulation.particles):
             obj = get_or_create_particle(p, i)
@@ -103,9 +124,14 @@ def run_simulation(simulation: Simulation):
 
                 if p.total_charge != 0:
                     set_instancer_visibility(obj, False)
-                    obj.particle_systems[
-                        0
-                    ].settings.frame_end = bpy.context.scene.frame_current
+                    obj.particle_systems[0].settings.frame_end = scene.frame_current
+
+    # End of simulation, update animation scene:
+    scene.frame_end = frame
+    cam_curve = bpy.data.curves["Camera Path Curve"]
+    cam_curve.path_duration = frame
+    cam_curve.eval_time = frame
+    cam_curve.keyframe_insert(data_path="eval_time")
 
 
 def get_or_create_particle(p: Particle, i: int):
