@@ -46,6 +46,11 @@ particles = [
         np.array([-5.0, 2.0, -2.0]),
         np.array([2, 2, 2]),
     ),
+    Particle(
+        np.array([CHAMBER_SIZE / 2, CHAMBER_SIZE / 2, CHAMBER_SIZE / 2]),
+        np.array([-5.0, -5.0, -5.0]),
+        np.array([3, 3, 2]),
+    ),
 ]
 simulation = Simulation(chamber, particles, time_modifier=0.5)
 

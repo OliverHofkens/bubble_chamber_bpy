@@ -98,9 +98,11 @@ def run_simulation(simulation: Simulation):
                 p.is_dirty = False
                 obj.location = p.position
                 obj.keyframe_insert(data_path="location")
-                set_visibility(obj, False)
+                # Hiding the object also hides the particles:
+                # set_visibility(obj, False)
 
                 if p.total_charge != 0:
+                    set_instancer_visibility(obj, False)
                     obj.particle_systems[
                         0
                     ].settings.frame_end = bpy.context.scene.frame_current
@@ -122,7 +124,9 @@ def get_or_create_particle(p: Particle, i: int):
         # obj.keyframe_insert(data_path="hide_viewport")
         with at_frame(0):
             set_visibility(obj, False)
+            set_instancer_visibility(obj, False)
         set_visibility(obj, True)
+        set_instancer_visibility(obj, True)
 
         # Assign the material:
         mat = get_or_create_material(p)
@@ -193,6 +197,12 @@ def set_visibility(obj, vis: bool):
     if obj.hide_render != hide:
         obj.hide_render = hide
         obj.keyframe_insert(data_path="hide_render")
+
+
+def set_instancer_visibility(obj, vis: bool):
+    if obj.show_instancer_for_render != vis:
+        obj.show_instancer_for_render = vis
+        obj.keyframe_insert(data_path="show_instancer_for_render")
 
 
 @contextmanager
