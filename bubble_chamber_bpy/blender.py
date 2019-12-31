@@ -24,7 +24,6 @@ def find_deps():
 find_deps()
 
 import bpy
-import numpy as np
 
 from bubble_chamber_bpy.models import BubbleChamber, Particle
 from bubble_chamber_bpy.simulation import Simulation
@@ -33,23 +32,20 @@ from bubble_chamber_bpy import render as r
 
 CHAMBER_SIZE = 20
 chamber = BubbleChamber(
-    np.array([CHAMBER_SIZE, CHAMBER_SIZE, CHAMBER_SIZE]), np.array([0.0, 0.0, 2.0]), 0.3
+    [CHAMBER_SIZE, CHAMBER_SIZE, CHAMBER_SIZE], [0.0, 0.0, 2.0], 0.3
 )
 particles = [
+    Particle([-1 * CHAMBER_SIZE / 2, 0.0, 0.0], [5.0, 0.0, 0.0], [5, 5, 5],),
+    Particle([CHAMBER_SIZE / 2, 0.0, CHAMBER_SIZE / 2], [-5.0, 2.0, -2.0], [2, 2, 2],),
     Particle(
-        np.array([-1 * CHAMBER_SIZE / 2, 0.0, 0.0]),
-        np.array([5.0, 0.0, 0.0]),
-        np.array([5, 5, 5]),
+        [CHAMBER_SIZE / 2, CHAMBER_SIZE / 2, CHAMBER_SIZE / 2],
+        [-5.0, -5.0, -5.0],
+        [3, 3, 2],
     ),
     Particle(
-        np.array([CHAMBER_SIZE / 2, 0.0, CHAMBER_SIZE / 2]),
-        np.array([-5.0, 2.0, -2.0]),
-        np.array([2, 2, 2]),
-    ),
-    Particle(
-        np.array([CHAMBER_SIZE / 2, CHAMBER_SIZE / 2, CHAMBER_SIZE / 2]),
-        np.array([-5.0, -5.0, -5.0]),
-        np.array([3, 3, 2]),
+        [-1 * CHAMBER_SIZE / 2, -1 * CHAMBER_SIZE / 2, -1 * CHAMBER_SIZE / 2],
+        [4.0, 4.0, 4.0],
+        [3, 2, 4],
     ),
 ]
 simulation = Simulation(chamber, particles, time_modifier=0.5)

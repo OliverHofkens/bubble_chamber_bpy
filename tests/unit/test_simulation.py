@@ -7,13 +7,11 @@ from bubble_chamber_bpy.simulation import Simulation
 
 @pytest.fixture
 def chamber():
-    return BubbleChamber(np.array([10, 10, 10]), np.array([0.0, 0.0, 2.0]), 0.3)
+    return BubbleChamber([10, 10, 10], [0.0, 0.0, 2.0], 0.3)
 
 
-def particle_with_charge(pos, neut, neg):
-    return Particle(
-        np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]), np.array([pos, neut, neg])
-    )
+def particle_with_charge(pos, neut, neg) -> Particle:
+    return Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [pos, neut, neg])
 
 
 def test_particle_with_mass_one_doesnt_split(chamber):

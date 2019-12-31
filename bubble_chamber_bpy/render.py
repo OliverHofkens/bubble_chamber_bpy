@@ -189,7 +189,7 @@ def get_or_create_material(p: Particle):
     node_tree = obj.node_tree
     material_out = node_tree.nodes["Material Output"]
 
-    # Delete default shader node:
+    # Delete default shader nodes:
     for n in node_tree.nodes:
         if n != material_out:
             node_tree.nodes.remove(n)
@@ -205,10 +205,6 @@ def get_or_create_material(p: Particle):
 
 
 def color_for_particle(p: Particle, with_alpha: bool = True):
-    # charge = p.total_charge
-    # hue = 0 if charge >= 0 else 0.60
-    # saturation = abs(charge) / (p.mass * 0.8)
-    # value = 0.8
     rgb = colorsys.hsv_to_rgb(0.6, 0.6, 0.8)
 
     if with_alpha:

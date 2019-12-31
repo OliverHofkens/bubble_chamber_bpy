@@ -79,9 +79,8 @@ class Simulation:
 
             unique, counts = np.unique(new_charge_symbols, return_counts=True)
             counts = dict(zip(unique, counts))
-            new_charges = np.array(
-                [counts.get(1, 0), counts.get(0, 0), counts.get(-1, 0)]
-            )
+            new_charges = [counts.get(1, 0), counts.get(0, 0), counts.get(-1, 0)]
+
             self.new_part_buffer.append(
                 Particle(np.copy(p.position), np.copy(p.velocity), new_charges)
             )
