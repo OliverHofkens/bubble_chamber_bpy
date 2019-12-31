@@ -4,6 +4,7 @@ isort:skip_file
 from pathlib import Path
 import site
 import subprocess
+from random import uniform, randint
 
 
 def find_deps():
@@ -32,19 +33,16 @@ CHAMBER_SIZE = 20
 chamber = BubbleChamber(
     [CHAMBER_SIZE, CHAMBER_SIZE, CHAMBER_SIZE], [0.0, 0.0, 2.0], 0.3
 )
+# Let's spawn a particle in every corner of the chamber, flying inward
 particles = [
-    Particle([-1 * CHAMBER_SIZE / 2, 0.0, 0.0], [5.0, 0.0, 0.0], [5, 5, 5],),
-    Particle([CHAMBER_SIZE / 2, 0.0, CHAMBER_SIZE / 2], [-5.0, 2.0, -2.0], [2, 2, 2],),
     Particle(
-        [CHAMBER_SIZE / 2, CHAMBER_SIZE / 2, CHAMBER_SIZE / 2],
-        [-5.0, -5.0, -5.0],
-        [3, 3, 2],
-    ),
-    Particle(
-        [-1 * CHAMBER_SIZE / 2, -1 * CHAMBER_SIZE / 2, -1 * CHAMBER_SIZE / 2],
-        [4.0, 4.0, 4.0],
-        [3, 2, 4],
-    ),
+        [x * CHAMBER_SIZE / 2, y * CHAMBER_SIZE / 2, z * CHAMBER_SIZE / 2],
+        [uniform(-5.0, -2.0) * x, uniform(-5.0, -2.0) * y, uniform(-5.0, -2.0) * z],
+        [randint(1, 5), randint(1, 5), randint(1, 5)],
+    )
+    for x in (-1, 1)
+    for y in (-1, 1)
+    for z in (-1, 1)
 ]
 simulation = Simulation(chamber, particles, time_modifier=0.5)
 

@@ -66,6 +66,7 @@ def create_camera(chamber: BubbleChamber):
     # Create the actual camera, the location is already constrained to the path
     bpy.ops.object.camera_add()
     cam = bpy.context.object
+    cam.lens = 18
     bpy.context.scene.camera = cam
 
     # Lock the camera to the path:
@@ -115,12 +116,12 @@ def run_simulation(simulation: Simulation):
                 p.is_dirty = False
                 obj.location = p.position
                 obj.keyframe_insert(data_path="location")
-                # Hiding the object also hides the particles:
-                # set_visibility(obj, False)
 
                 if p.total_charge != 0:
                     set_instancer_visibility(obj, False)
                     obj.particle_systems[0].settings.frame_end = scene.frame_current
+                else:
+                    set_visibility(obj, False)
 
     # End of simulation, update animation scene:
     scene.frame_end = frame
