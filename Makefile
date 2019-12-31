@@ -29,6 +29,3 @@ lint: ## check style and typing
 
 test: ## run tests quickly with the default Python
 	pipenv run pytest
-
-distribute:
-	s3pypi --bucket appstrakt-pypi --secret ${S3PYPI_SECRET}
