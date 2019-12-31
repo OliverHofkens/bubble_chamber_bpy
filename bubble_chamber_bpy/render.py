@@ -17,7 +17,6 @@ def clear_all():
 
 
 def create_chamber(chamber: BubbleChamber):
-    print("Creating bubble chamber")
     size = np.max(chamber.dimensions)
     bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
     chamber_bpy = bpy.context.object
@@ -34,7 +33,6 @@ def create_chamber(chamber: BubbleChamber):
 
 
 def create_particles(particles: Sequence[Particle]):
-    print("Creating particles")
     for i, p in enumerate(particles):
         get_or_create_particle(p, i)
 
@@ -54,7 +52,6 @@ def create_renderer():
 
 
 def create_camera(chamber: BubbleChamber):
-    print("Creating camera")
     # Add a path for the camera to track:
     bpy.ops.curve.primitive_nurbs_circle_add(
         radius=np.max(chamber.dimensions), rotation=(math.radians(45), 0, 0)
@@ -85,7 +82,6 @@ def create_camera(chamber: BubbleChamber):
 
 
 def create_vapor_particle(name: str, material):
-    print("Creating vapor particle")
     bpy.ops.mesh.primitive_cube_add()
     vapor_part = bpy.context.object
     vapor_part.name = name

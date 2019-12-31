@@ -84,5 +84,3 @@ class Simulation:
             self.new_part_buffer.append(
                 Particle(np.copy(p.position), np.copy(p.velocity), new_charges)
             )
-
-        print(f"{p} split into {self.new_part_buffer}")
