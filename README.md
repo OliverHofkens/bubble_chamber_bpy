@@ -2,14 +2,34 @@
 
 Bubble chamber simulation in Blender + Python
 
+
+![Small example render of simulation](docs/assets/particles-render.gif)
+
+A spiritual successor to
+[my previous 2D project written in Rust+Amethyst]_(https://github.com/OliverHofkens/bubble_chamber),
+this time written in Python and rendering in 3D with [Blender](https://www.blender.org/).
+It simulates the phenomena that occur in
+[bubble chambers](https://en.wikipedia.org/wiki/Bubble_chamber) or
+[cloud chambers](https://en.wikipedia.org/wiki/Cloud_chamber) where decaying,
+charged particles leave spiraling trails as they move through a magnetic field.
+
+
+## Requirements
+
+* Blender 2.80 or higher
+
+
 ## Installation
 
-* Run `pip install bubble-chamber-bpy` or `pipenv install bubble-chamber-bpy`
+* Clone the repository and run `pipenv install` inside the project.
 
 
 ## Usage
 
-See `bubble-chamber-bpy --help`
+* Run `blender -P <path_to_repo>/bubble_chamber_bpy/blender.py`
+* The simulation should run and Blender should open up with a fully populated
+  scene + animations
+* Hit 'Render Animation' or play around with the scene/animations.
 
 
 ## Development
