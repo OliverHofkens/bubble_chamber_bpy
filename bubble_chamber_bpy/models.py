@@ -26,7 +26,7 @@ class Particle:
             self.charges = np.array(self.charges)
 
         # Generate a decay time for this particle:
-        self.decays_after = random.uniform(0.25, 2.50)
+        self.decays_after = random.expovariate(0.5)
 
     @property
     def total_charge(self) -> int:
