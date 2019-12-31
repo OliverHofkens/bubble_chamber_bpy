@@ -6,7 +6,7 @@ Bubble chamber simulation in Blender + Python
 ![Small example render of simulation](docs/assets/particles-render.gif)
 
 A spiritual successor to
-[my previous 2D project written in Rust+Amethyst]_(https://github.com/OliverHofkens/bubble_chamber),
+[my previous 2D project written in Rust+Amethyst](https://github.com/OliverHofkens/bubble_chamber),
 this time written in Python and rendering in 3D with [Blender](https://www.blender.org/).
 It simulates the phenomena that occur in
 [bubble chambers](https://en.wikipedia.org/wiki/Bubble_chamber) or
