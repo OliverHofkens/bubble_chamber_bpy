@@ -23,8 +23,6 @@ def find_deps():
 
 find_deps()
 
-import bpy
-
 from bubble_chamber_bpy.models import BubbleChamber, Particle
 from bubble_chamber_bpy.simulation import Simulation
 from bubble_chamber_bpy import render as r
